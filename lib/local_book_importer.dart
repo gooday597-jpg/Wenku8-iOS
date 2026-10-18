@@ -97,11 +97,12 @@ class LocalBookImporter extends ChangeNotifier {
             label: '从网盘导入',
             onPressed: () => Navigator.pop(menu, 'cloud'),
           ),
-          if (!LocalPlatform.ios) GlassMenuItem(
-            order: 2,
-            label: '扫描本地文件夹',
-            onPressed: () => Navigator.pop(menu, 'scan'),
-          ),
+          if (!LocalPlatform.ios)
+            GlassMenuItem(
+              order: 2,
+              label: '扫描本地文件夹',
+              onPressed: () => Navigator.pop(menu, 'scan'),
+            ),
           if (management)
             GlassMenuItem(
               order: 3,

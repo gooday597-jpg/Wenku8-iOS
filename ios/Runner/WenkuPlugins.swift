@@ -5,6 +5,7 @@ import AVFoundation
 import CryptoKit
 import Flutter
 import Security
+import Photos
 import UIKit
 import UniformTypeIdentifiers
 
@@ -429,6 +430,60 @@ final class LocalToolsPlugin: NSObject, FlutterPlugin {
 
   func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
     switch call.method {
+    case "saveBookImage", "shareImage", "exportImage":
+      let args = call.arguments as? [String: Any]
+      guard let typed = args?["bytes"] as? FlutterStandardTypedData,
+            typed.data.count <= 32 * 1024 * 1024,
+            let image = UIImage(data: typed.data),
+            image.size.width * image.scale * image.size.height * image.scale <= 50_000_000 else {
+        result(FlutterError(code: "IMAGE", message: "图片为空、过大或格式无法识别", details: nil))
+        return
+      }
+      if call.method == "saveBookImage" {
+        PHPhotoLibrary.requestAuthorization(for: .addOnly) { authorization in
+          guard authorization == .authorized || authorization == .limited else {
+            DispatchQueue.main.async { result(FlutterError(code: "PHOTO_PERMISSION", message: "需要相册添加权限才能保存插图", details: nil)) }
+            return
+          }
+          PHPhotoLibrary.shared().performChanges({
+            PHAssetCreationRequest.forAsset().addResource(with: .photo, data: typed.data, options: nil)
+          }) { ok, _ in
+            DispatchQueue.main.async { result(ok) }
+          }
+        }
+        return
+      }
+      let name = URL(fileURLWithPath: args?["name"] as? String ?? "wenku8-image.png").lastPathComponent
+      let temporary = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + "-" + name)
+      do { try typed.data.write(to: temporary, options: .atomic) }
+      catch { result(FlutterError(code: "IMAGE", message: "无法准备图片文件", details: nil)); return }
+      if call.method == "exportImage" {
+        guard !pickerActive else {
+          try? FileManager.default.removeItem(at: temporary)
+          result(FlutterError(code: "BUSY", message: "请先完成当前文件操作", details: nil))
+          return
+        }
+        pickerActive = true
+        presentPicker(exporting: [temporary]) { ok in
+          try? FileManager.default.removeItem(at: temporary)
+          result(ok == true)
+        }
+      } else {
+        guard let controller = rootViewController() else {
+          try? FileManager.default.removeItem(at: temporary)
+          result(FlutterError(code: "SHARE", message: "分享窗口无法打开", details: nil))
+          return
+        }
+        let sheet = UIActivityViewController(activityItems: [temporary], applicationActivities: nil)
+        if let popover = sheet.popoverPresentationController {
+          popover.sourceView = controller.view
+          popover.sourceRect = CGRect(x: controller.view.bounds.midX, y: controller.view.bounds.midY, width: 0, height: 0)
+          popover.permittedArrowDirections = []
+        }
+        sheet.completionWithItemsHandler = { _, _, _, _ in try? FileManager.default.removeItem(at: temporary) }
+        controller.present(sheet, animated: true)
+        result(nil)
+      }
     case "getKeepScreenOn":
       result(UIApplication.shared.isIdleTimerDisabled)
     case "keepScreenOn":

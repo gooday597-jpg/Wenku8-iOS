@@ -25,7 +25,7 @@ class NetworkStatus extends ValueNotifier<NetworkReachability> {
         _subscription != null ||
         kIsWeb ||
         (defaultTargetPlatform != TargetPlatform.android &&
-         defaultTargetPlatform != TargetPlatform.iOS)) {
+            defaultTargetPlatform != TargetPlatform.iOS)) {
       return;
     }
     _subscription = events.receiveBroadcastStream().listen(

@@ -2587,7 +2587,7 @@ class SettingsPage extends StatelessWidget {
       ),
     ),
     const SizedBox(height: 24),
-    const FrameRateOptions(),
+    if (!LocalPlatform.ios) const FrameRateOptions(),
     const SizedBox(height: 24),
     ContentPanel(
       key: const ValueKey('settings-performance'),

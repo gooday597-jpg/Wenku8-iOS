@@ -775,7 +775,7 @@ class _ReaderToolsState extends State<ReaderTools> {
                     '时间与电量保留在原状态栏位置',
                     style: TextStyle(fontSize: 12, height: 1.6),
                   ),
-                  if (LocalPlatform.android)
+                  if (LocalPlatform.mobile)
                     AnimatedBuilder(
                       animation: widget.state.readerBehaviorChanges,
                       builder: (context, _) => Row(
@@ -888,14 +888,14 @@ class _ReaderToolsState extends State<ReaderTools> {
                     style: TextStyle(fontSize: 12, height: 1.6),
                   ),
                   const Divider(height: 24),
-                  if (LocalPlatform.android)
+                  if (LocalPlatform.mobile)
                     _switch(
                       context,
                       '左边缘滑动调亮度',
                       prefs.edgeBrightness,
                       (v) => _preferences(prefs.copyWith(edgeBrightness: v)),
                     ),
-                  if (LocalPlatform.android)
+                  if (LocalPlatform.mobile)
                     _switch(
                       context,
                       '亮度跟随系统',
@@ -907,7 +907,7 @@ class _ReaderToolsState extends State<ReaderTools> {
                 ],
               ),
             ),
-            if (LocalPlatform.android)
+            if (LocalPlatform.mobile)
               AnimatedOptionSection(
                 expanded: prefs.brightness != null,
                 child: _adjustment(
