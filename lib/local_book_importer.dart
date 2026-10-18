@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'app_interactions.dart';
 import 'app_ui.dart';
 import 'book_documents.dart';
+import 'local_platform.dart';
 import 'catalog.dart';
 import 'cloud_library_page.dart';
 import 'cloud_sources.dart';
@@ -88,7 +89,7 @@ class LocalBookImporter extends ChangeNotifier {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           GlassMenuItem(
-            label: '导入书籍',
+            label: LocalPlatform.ios ? '导入 TXT / EPUB' : '导入书籍',
             onPressed: () => Navigator.pop(menu, 'local'),
           ),
           GlassMenuItem(
@@ -96,7 +97,7 @@ class LocalBookImporter extends ChangeNotifier {
             label: '从网盘导入',
             onPressed: () => Navigator.pop(menu, 'cloud'),
           ),
-          GlassMenuItem(
+          if (!LocalPlatform.ios) GlassMenuItem(
             order: 2,
             label: '扫描本地文件夹',
             onPressed: () => Navigator.pop(menu, 'scan'),

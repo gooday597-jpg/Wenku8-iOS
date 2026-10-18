@@ -39,7 +39,7 @@ class _ReaderStatusFooterState extends State<ReaderStatusFooter>
   }
 
   void _listen() {
-    if (!LocalPlatform.android || _subscription != null) return;
+    if (!LocalPlatform.mobile || _subscription != null) return;
     _subscription = ReaderStatusFooter.events.receiveBroadcastStream().listen((
       value,
     ) {

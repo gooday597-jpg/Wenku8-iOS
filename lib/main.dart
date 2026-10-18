@@ -56,7 +56,10 @@ Future<void> main() async {
       WidgetsBinding.instance.platformDispatcher.platformBrightness,
   };
   SystemChrome.setSystemUIOverlayStyle(novelSystemUiStyle(brightness));
-  final account = defaultTargetPlatform == TargetPlatform.android
+  final supportedClient = !kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.android ||
+       defaultTargetPlatform == TargetPlatform.iOS);
+  final account = supportedClient
       ? WenkuAccount()
       : null;
   final remote = LegacyWenkuRepository(
@@ -69,7 +72,7 @@ Future<void> main() async {
             account.authenticated,
           ),
   );
-  final repository = defaultTargetPlatform == TargetPlatform.android
+  final repository = supportedClient
       ? OfflineNovelRepository(
           remote: remote,
           cache: await OfflineCacheStore.forApp(),
@@ -94,11 +97,11 @@ Future<void> main() async {
           )..start(),
         )
       : null;
-  final customSpeech = defaultTargetPlatform == TargetPlatform.android
+  final customSpeech = supportedClient
       ? CustomSpeechSettings()
       : null;
   await customSpeech?.load();
-  final listening = defaultTargetPlatform == TargetPlatform.android
+  final listening = supportedClient
       ? ListeningController(
           repository: repository,
           audio: await SpeechAudioCache.forApp(

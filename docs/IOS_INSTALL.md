@@ -1,0 +1,32 @@
+# 轻小说文库 iOS 适配与安装
+
+本分支以 mikufoxxx/Wenku8_Flutter 的 0.3.7+63 为基础，复用 desire668/Wenku8_Flutter_for_ios 在 fb59bf8298c9384cdc6cca63ea8508a03e9bc17e 提交中的 Swift 接口实现。保留项目 GPL、署名、字体和第三方许可。
+
+## 安装
+
+支持 iOS 15.0 及以上的 iPhone / iPad（arm64）。IPA 尚未签名，先用自己的 Apple ID 或证书签名后安装。
+
+Windows 可使用 [Sideloadly 官网](https://sideloadly.io/)：
+
+1. 安装 Sideloadly 及其官网说明要求的 Apple 设备驱动。
+2. 用数据线连接并解锁 iPhone，在手机上信任此电脑。
+3. 在 Sideloadly 选择本 IPA、设备和 Apple ID，然后开始签名安装。
+4. 如系统要求，在“设置 → 通用 → VPN 与设备管理”中信任自己的开发者；iOS 16 及以上还可能要求打开“设置 → 隐私与安全性 → 开发者模式”并重启。
+
+免费 Apple ID 签名通常有效 7 天，到期需重签或续签。签名和双重认证均在自己的工具或设备中完成。
+
+## 功能范围
+
+- 接入真实在线文库、搜索、章节阅读、账号和离线章节缓存；网络服务可用性仍由来源站点和中继决定。
+- 新增 iOS 系统“文件”选择器，可多选导入 TXT / EPUB；TXT 支持 UTF-8、UTF-16 和 GB18030。
+- 保留新版本地书架、目录、阅读进度、书签和阅读排版。
+- 接入系统语音、后台音频、亮屏与亮度、网络状态、电量显示，以及系统文件中的文库同步。
+- 本机网盘和自定义语音配置存入 Keychain。
+
+iOS 首版的本地格式为 TXT / EPUB。Android 的 Kindle / PDF / DOCX 等转换器、全盘扫描、旧版 Android 数据导入和音量键翻页尚未移植。iOS 通过重新签名 IPA 更新，应用内 Android APK 更新不启用。
+
+## 自行构建
+
+进入 GitHub Actions 的 **Build iOS IPA**，运行本分支工作流。成功后在该次运行的 Artifacts 下载 **wenku8-ios-unsigned**，包含 IPA、相同提交的源码、安装说明与校验值。
+
+工作流在 GitHub 的 macOS 环境执行 Flutter 分析、现有本地阅读与导入测试和 iOS Release 编译。真实设备的签名、系统文件提供商、账号登录与听书行为仍需真机确认。

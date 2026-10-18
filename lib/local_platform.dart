@@ -11,6 +11,8 @@ abstract final class LocalPlatform {
   static const channel = MethodChannel('org.mewx.wenku8/local_tools');
   static bool get android =>
       !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+  static bool get ios => !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS;
+  static bool get mobile => android || ios;
   static Future<bool> exportBackup(String text, String name) async =>
       await channel.invokeMethod<bool>('exportBackup', {
         'text': text,
@@ -49,7 +51,7 @@ abstract final class LocalPlatform {
     required LibraryState state,
     ValueChanged<int>? onPage,
   }) {
-    if (!android) return;
+    if (!mobile) return;
     if (active) {
       _readerOwner = owner;
       _onPage = onPage;
@@ -76,7 +78,7 @@ abstract final class LocalPlatform {
   static bool _requestedAwake = false;
 
   static void keepScreen(Object owner, bool enabled) {
-    if (enabled && android) {
+    if (enabled && mobile) {
       _awakeOwners.add(owner);
     } else {
       _awakeOwners.remove(owner);

@@ -1,0 +1,72 @@
+name: Build iOS IPA
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ['ios-port']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-preview-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-26
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.5'
+          channel: stable
+          cache: true
+      - name: Configure CocoaPods build
+        run: flutter config --no-enable-swift-package-manager
+      - name: Check distributable source
+        run: python3 tools/check_public_source.py
+      - run: flutter pub get
+      - run: flutter analyze
+      - name: Test reading, import and synchronization
+        run: >-
+          flutter test
+          test/local_books_test.dart
+          test/local_book_importer_test.dart
+          test/book_documents_test.dart
+          test/book_sync_test.dart
+          test/offline_repository_test.dart
+          test/offline_backup_test.dart
+          test/cloud_sources_test.dart
+      - name: Build iPhone application
+        run: flutter build ios --release --no-codesign
+      - name: Package IPA and matching source
+        run: |
+          set -euo pipefail
+          mkdir -p build/ios-delivery/Payload
+          cp -R build/ios/iphoneos/Runner.app build/ios-delivery/Payload/
+          (cd build/ios-delivery && zip -qry ../wenku8-0.3.7-ios-unsigned.ipa Payload)
+          git archive --format=zip --output=build/wenku8-ios-source.zip HEAD
+          cp docs/IOS_INSTALL.md build/IOS_INSTALL.md
+          shasum -a 256 build/wenku8-0.3.7-ios-unsigned.ipa > build/SHA256SUMS.txt
+          python3 - <<'PY'
+          import zipfile, plistlib
+          path = 'build/wenku8-0.3.7-ios-unsigned.ipa'
+          with zipfile.ZipFile(path) as archive:
+              assert archive.testzip() is None
+              info = plistlib.loads(archive.read('Payload/Runner.app/Info.plist'))
+              assert 'iPhoneOS' in info['CFBundleSupportedPlatforms']
+              assert info['CFBundleShortVersionString'] == '0.3.7'
+              print('IPA verified:', info['CFBundleIdentifier'], info['MinimumOSVersion'])
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wenku8-ios-unsigned
+          path: |
+            build/wenku8-0.3.7-ios-unsigned.ipa
+            build/wenku8-ios-source.zip
+            build/IOS_INSTALL.md
+            build/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30

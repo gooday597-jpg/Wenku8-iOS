@@ -12,5 +12,21 @@ import UIKit
 
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
+    let registry = engineBridge.pluginRegistry
+    if let registrar = registry.registrar(forPlugin: "Wenku8BridgePlugin") {
+      Wenku8BridgePlugin.register(with: registrar)
+    }
+    if let registrar = registry.registrar(forPlugin: "LocalToolsPlugin") {
+      LocalToolsPlugin.register(with: registrar)
+    }
+    if let registrar = registry.registrar(forPlugin: "SystemSpeechPlugin") {
+      SystemSpeechPlugin.register(with: registrar)
+    }
+    if let registrar = registry.registrar(forPlugin: "IOSDocumentsPlugin") {
+      IOSDocumentsPlugin.register(with: registrar)
+    }
+    if let registrar = registry.registrar(forPlugin: "IOSDevicePlugin") {
+      IOSDevicePlugin.register(with: registrar)
+    }
   }
 }

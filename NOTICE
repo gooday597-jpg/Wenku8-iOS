@@ -8,6 +8,14 @@ notice is retained in LICENSE. Original notices remain applicable. This Flutter
 combined distribution uses GNU GPL version 3; see assets/licenses/GPL-3.0.txt.
 
 Flutter branch changes, September-October 2026:
+This iOS adaptation was modified on 2026-10-18. The Swift relay, speech and
+local-tools bridge in ios/Runner/WenkuPlugins.swift is adapted from
+desire668/Wenku8_Flutter_for_ios, commit
+fb59bf8298c9384cdc6cca63ea8508a03e9bc17e, under the same GPL notices.
+https://github.com/desire668/Wenku8_Flutter_for_ios
+New iOS document imports, Keychain configuration, Files synchronization,
+device status and build workflow are covered by the application license.
+
 New Flutter presentation, reader, local library/cache, Android bridges and
 listening implementation. Modified on 2026-10-15 to retire vendor-specific
 speech integration, add configurable low-performance rendering, remove runtime

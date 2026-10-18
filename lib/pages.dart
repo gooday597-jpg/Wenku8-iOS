@@ -2462,7 +2462,7 @@ class SettingsPage extends StatelessWidget {
             onCommitted: (value) =>
                 _savePreference(context, () => state.setFontSize(value)),
           ),
-          if (LocalPlatform.android)
+          if (LocalPlatform.mobile)
             Row(
               children: [
                 Icon(
@@ -2490,7 +2490,7 @@ class SettingsPage extends StatelessWidget {
         ],
       ),
     ),
-    if (LocalPlatform.android) ...[
+    if (LocalPlatform.mobile) ...[
       if (ListeningScope.maybeOf(context) case final listening?)
         if (listening.customSpeech case final settings?) ...[
           const SizedBox(height: 14),
@@ -6304,7 +6304,7 @@ class _ReaderPageState extends State<ReaderPage>
               ),
             ),
           ),
-          if (LocalPlatform.android)
+          if (LocalPlatform.mobile)
             Positioned(
               left: 0,
               width: 20,
