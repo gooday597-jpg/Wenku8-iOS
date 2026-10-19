@@ -147,28 +147,20 @@ class LibraryState extends ChangeNotifier {
   LibraryState(this._prefs, {UserFontStore? fonts})
     : fonts = fonts ?? UserFontStore() {
     _shelf.addAll(
-      ((_prefs.get('shelf') is List<String>)
-              ? _prefs.getStringList('shelf')!
-              : const <String>[])
+      _storedStrings('shelf')
           .map(int.tryParse)
           .whereType<int>()
           .where((id) => id > 0 && !isLocalBook(id)),
     );
     _hiddenHistory.addAll(
-      ((_prefs.get('reading_history_hidden') is List<String>)
-              ? _prefs.getStringList('reading_history_hidden')!
-              : const <String>[])
-          .map(int.tryParse)
-          .whereType<int>()
-          .where((id) => id > 0),
+      _storedStrings(
+        'reading_history_hidden',
+      ).map(int.tryParse).whereType<int>().where((id) => id > 0),
     );
     _hiddenLocalBooks.addAll(
-      (_prefs.get('local_shelf_hidden') is List<String>
-              ? _prefs.getStringList('local_shelf_hidden')!
-              : const <String>[])
-          .map(int.tryParse)
-          .whereType<int>()
-          .where(isLocalBook),
+      _storedStrings(
+        'local_shelf_hidden',
+      ).map(int.tryParse).whereType<int>().where(isLocalBook),
     );
     for (final key in _prefs.getKeys()) {
       if (key.startsWith('chapter_')) {
@@ -311,8 +303,8 @@ class LibraryState extends ChangeNotifier {
     _localReaderMode = _prefs.get('localReaderMode') == true;
     _directReading = _prefs.get('directReading') == true;
     _combinedShelf = _prefs.get('combinedShelf') == true;
-    final recent = _prefs.get('recentSearches');
-    if (recent is List<String>) {
+    final recent = _storedStrings('recentSearches');
+    if (recent.isNotEmpty) {
       final seen = <String>{};
       _recentSearches = recent
           .map((query) => query.trim())
@@ -326,6 +318,16 @@ class LibraryState extends ChangeNotifier {
   }
 
   final SharedPreferences _prefs;
+
+  List<String> _storedStrings(String key) {
+    // Native platform codecs deserialize arrays as List<Object?>, even when
+    // every item is a string. Validate items instead of discarding the list.
+    final value = _prefs.get(key);
+    return value is List
+        ? value.whereType<String>().toList(growable: false)
+        : const [];
+  }
+
   final UserFontStore fonts;
   String? fontError;
   LocalLibraryPreferences? _organization;
@@ -383,9 +385,8 @@ class LibraryState extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await recoverLibraryRestore(prefs);
     final state = LibraryState(prefs);
-    final storedShelf = prefs.get('shelf');
-    if (storedShelf is List<String> &&
-        storedShelf.map(int.tryParse).whereType<int>().any(isLocalBook)) {
+    final storedShelf = state._storedStrings('shelf');
+    if (storedShelf.map(int.tryParse).whereType<int>().any(isLocalBook)) {
       // Migrate only membership. Originals, metadata, positions and bookmarks
       // remain available to the local library and cross-device sync.
       await state._commitLibraryRecords({

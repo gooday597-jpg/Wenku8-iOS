@@ -39,6 +39,8 @@ jobs:
           test/offline_repository_test.dart
           test/offline_backup_test.dart
           test/cloud_sources_test.dart
+          test/library_native_preferences_test.dart
+          test/library_features_test.dart
       - name: Build iPhone application
         run: flutter build ios --release --no-codesign
       - name: Package IPA and matching source
@@ -46,25 +48,26 @@ jobs:
           set -euo pipefail
           mkdir -p build/ios-delivery/Payload
           cp -R build/ios/iphoneos/Runner.app build/ios-delivery/Payload/
-          (cd build/ios-delivery && zip -qry ../wenku8-0.3.7-ios-unsigned.ipa Payload)
+          (cd build/ios-delivery && zip -qry ../wenku8-0.3.7-build64-ios-unsigned.ipa Payload)
           git archive --format=zip --output=build/wenku8-ios-source.zip HEAD
           cp docs/IOS_INSTALL.md build/IOS_INSTALL.md
-          shasum -a 256 build/wenku8-0.3.7-ios-unsigned.ipa > build/SHA256SUMS.txt
+          shasum -a 256 build/wenku8-0.3.7-build64-ios-unsigned.ipa > build/SHA256SUMS.txt
           python3 - <<'PY'
           import zipfile, plistlib
-          path = 'build/wenku8-0.3.7-ios-unsigned.ipa'
+          path = 'build/wenku8-0.3.7-build64-ios-unsigned.ipa'
           with zipfile.ZipFile(path) as archive:
               assert archive.testzip() is None
               info = plistlib.loads(archive.read('Payload/Runner.app/Info.plist'))
               assert 'iPhoneOS' in info['CFBundleSupportedPlatforms']
               assert info['CFBundleShortVersionString'] == '0.3.7'
+              assert info['CFBundleVersion'] == '64'
               print('IPA verified:', info['CFBundleIdentifier'], info['MinimumOSVersion'])
           PY
       - uses: actions/upload-artifact@v4
         with:
           name: wenku8-ios-unsigned
           path: |
-            build/wenku8-0.3.7-ios-unsigned.ipa
+            build/wenku8-0.3.7-build64-ios-unsigned.ipa
             build/wenku8-ios-source.zip
             build/IOS_INSTALL.md
             build/SHA256SUMS.txt
@@ -73,7 +76,7 @@ jobs:
 
   simulator:
     runs-on: macos-15
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
@@ -95,6 +98,16 @@ jobs:
           fi
           xcrun simctl bootstatus "$DEVICE_ID" -b
           flutter test integration_test/ios_native_smoke_test.dart -d "$DEVICE_ID" --verbose 2>&1 | tee ios-simulator.log
+      - name: Save bookshelf in first app process
+        timeout-minutes: 8
+        run: |
+          set -euo pipefail
+          flutter test integration_test/ios_shelf_restart_test.dart -d "$DEVICE_ID" --verbose 2>&1 | tee ios-shelf-save.log
+      - name: Restore bookshelf in a new app process
+        timeout-minutes: 8
+        run: |
+          set -euo pipefail
+          flutter test integration_test/ios_shelf_restart_test.dart -d "$DEVICE_ID" --dart-define=VERIFY_SHELF_RESTART=true --verbose 2>&1 | tee ios-shelf-restart.log
       - name: Collect simulator diagnostics
         if: failure()
         timeout-minutes: 2
@@ -111,5 +124,7 @@ jobs:
             ios-simulator.log
             ios-simulator-devices.txt
             ios-simulator-device.log
+            ios-shelf-save.log
+            ios-shelf-restart.log
           if-no-files-found: warn
           retention-days: 7
