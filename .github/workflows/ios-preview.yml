@@ -76,7 +76,7 @@ jobs:
 
   simulator:
     runs-on: macos-15
-    timeout-minutes: 30
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
@@ -87,8 +87,8 @@ jobs:
       - name: Configure CocoaPods build
         run: flutter config --no-enable-swift-package-manager
       - run: flutter pub get
-      - name: Verify native imports and online relay in iOS Simulator
-        timeout-minutes: 15
+      - name: Boot iOS Simulator
+        timeout-minutes: 4
         run: |
           set -euo pipefail
           DEVICE_ID=$(xcrun simctl list devices available --json | python3 -c 'import json,sys; devices=[d for group in json.load(sys.stdin)["devices"].values() for d in group if d["name"].startswith("iPhone")]; print(sorted(devices,key=lambda d:d["state"]!="Booted")[0]["udid"])')
@@ -97,17 +97,25 @@ jobs:
             xcrun simctl boot "$DEVICE_ID"
           fi
           xcrun simctl bootstatus "$DEVICE_ID" -b
-          flutter test integration_test/ios_native_smoke_test.dart -d "$DEVICE_ID" --verbose 2>&1 | tee ios-simulator.log
       - name: Save bookshelf in first app process
-        timeout-minutes: 8
+        timeout-minutes: 12
         run: |
           set -euo pipefail
-          flutter test integration_test/ios_shelf_restart_test.dart -d "$DEVICE_ID" --verbose 2>&1 | tee ios-shelf-save.log
+          # flutter test uninstalls the app at teardown. Keep the installed app
+          # and explicitly terminate only its process, preserving UserDefaults.
+          flutter drive --driver=test_driver/integration_test.dart --target=integration_test/ios_shelf_restart_test.dart -d "$DEVICE_ID" --keep-app-running --verbose 2>&1 | tee ios-shelf-save.log
+          xcrun simctl terminate "$DEVICE_ID" org.mewx.wenku8Flutter
       - name: Restore bookshelf in a new app process
         timeout-minutes: 8
         run: |
           set -euo pipefail
-          flutter test integration_test/ios_shelf_restart_test.dart -d "$DEVICE_ID" --dart-define=VERIFY_SHELF_RESTART=true --verbose 2>&1 | tee ios-shelf-restart.log
+          flutter drive --driver=test_driver/integration_test.dart --target=integration_test/ios_shelf_restart_test.dart -d "$DEVICE_ID" --dart-define=VERIFY_SHELF_RESTART=true --keep-app-running --verbose 2>&1 | tee ios-shelf-restart.log
+          xcrun simctl terminate "$DEVICE_ID" org.mewx.wenku8Flutter
+      - name: Verify native imports and online relay in iOS Simulator
+        timeout-minutes: 8
+        run: |
+          set -euo pipefail
+          flutter test integration_test/ios_native_smoke_test.dart -d "$DEVICE_ID" --verbose 2>&1 | tee ios-simulator.log
       - name: Collect simulator diagnostics
         if: failure()
         timeout-minutes: 2

@@ -5,7 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wenku8_flutter/catalog.dart';
 import 'package:wenku8_flutter/library_state.dart';
 
-// CI launches this app twice, preserving its real iOS UserDefaults container.
+// CI uses flutter drive --keep-app-running and simctl terminate between runs,
+// launching this app twice without uninstalling its real UserDefaults container.
 // The second process must recover the shelf written by the first process.
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
